@@ -21,7 +21,10 @@ const App = () => {
       type: 'question'
     })
 
+    // 次の回答一覧をセット
     setAnawers(nextDataset.answers)
+
+    //現在の質問IDをセット
     setCurrentID(nextQuestionId)
   }
 
@@ -87,9 +90,11 @@ const App = () => {
 
       // state更新・表示
       setDataset(initDataset) //生のデータ
+
+      //最初の質問を表示
       displayNextQuestion(currentId, initDataset[currentId])
-    })()
-  }, [])
+    })();
+  }, []);
 
   // 自動スクロールを実装
   useEffect(() => {
@@ -108,6 +113,6 @@ const App = () => {
         </div>
       </section>
     );
-  }
+}
 
 export default App

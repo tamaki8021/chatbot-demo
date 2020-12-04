@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useCallback} from 'react';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -7,67 +7,80 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextInput from './TextInput';
 
+const FormDaialog = (props) =>{
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [discription, setDiscription] = useState("");
 
-export default class FormDaialog extends React.Component{
-  constructor(props) {
-    super(props);
-    this.state={
-      name:"",
-      email:"",
-      discription:""
-    }
+  const inputName = useCallback((event) => {
+    setName(event.target.value)
+  }, [setName]);
 
-    this.inputName = this.inputName.bind(this)
-    this.inputEmail = this.inputEmail.bind(this)
-    this.inputDiscription = this.inputDiscription.bind(this)
+  const inputEmail = useCallback((event) => {
+    setEmail(event.target.value)
+  },[setEmail]);
+
+  const inputDiscription = useCallback((event) => {
+    setDiscription(event.target.value)
+  },[setDiscription]);
+
+  //メールアドレスの書式チェック
+  const validateEmailFormat = (email) => {
+    const regex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+    return regex.test(email)
   }
 
-  inputName = (event) =>{
-    this.setState({ name: event.target.value})
-  }
+  // 項目に空欄がないかチェック
+  const validateRequiredInput = (...args) => {
+      let isBlank = false;
+      for (let i = 0; i < args.length; i=(i+1)|0) {
+          if (args[i] === "") {
+              isBlank = true;
+          }
+      }
+      return isBlank
+  };
 
-  inputEmail = (event) =>{
-    this.setState({ email: event.target.value})
-  }
+  // slackに通知
+  const submitForm = () => {
+    const isBlank = validateRequiredInput(name, email, description)
+    const isValidEmail = validateEmailFormat(email)
 
-  inputDiscription = (event) =>{
-    this.setState({ discription: event.target.value})
-  }
+    if (isBlank) {
+      alert('必須入力欄が空白です。')
+      return false
+    } else if (!isValidEmail) {
+      alert('メールアドレスの書式が異なります。')
+      return false
+    } else {
+      const payload = {
+        text: 'お問い合わせがありました\n' +
+              'お名前: ' + name + '\n' +
+              'Email: ' + email + '\n' +
+              'お問い合わせ内容:\n' + discription
+      };
+    
 
-  submitForm = () => {
-    const name = this.state.name;
-    const email = this.state.email;
-    const discription = this.state.discription;
+      const url = 'https://hooks.slack.com/services/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'
 
-    const payload = {
-      text: 'お問い合わせがありました\n' +
-            'お名前: ' + name + '\n' +
-            'Email: ' + email + '\n' +
-            'お問い合わせ内容:\n' + discription
-    }
-
-    const url = 'https://hooks.slack.com/services/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'
-
-    fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    }).then(() => {
-      alert('送信が完了しました。追ってご連絡します！')
-      this.setState({
-        name:"",
-        email:"",
-        discription:""
+      fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }).then(() => {
+          alert('送信が完了しました。追ってご連絡します！')
+          setName("")
+          setEmail("")
+          setDiscription("")
+          return props.handleClose();
       })
-      return this.props.handleClose();
-    })
-  }
+    }
+  };
 
 
-  render() {
-    return(
+  return(
       <Dialog
-      open={this.props.open}
-      onClose={this.props.handleClose}
+      open={props.open}
+      onClose={props.handleClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
@@ -76,27 +89,28 @@ export default class FormDaialog extends React.Component{
         <DialogContentText id="alert-dialog-description">
             <TextInput 
               label={"お名前（必須）"} multiline={false} rows={1}
-              value={this.state.name} type={"text"} onChange={this.inputName}
+              value={name} type={"text"} onChange={inputName}
             />
             <TextInput 
               label={"メールアドレス（必須）"} multiline={false} rows={1}
-              value={this.state.email} type={"email"} onChange={this.inputEmail}
+              value={email} type={"email"} onChange={inputEmail}
             />
             <TextInput 
               label={"お問い合わせ内容（必須）"} multiline={true} rows={5}
-              value={this.state.discription} type={"text"} onChange={this.inputDiscription}
+              value={discription} type={"text"} onChange={inputDiscription}
             />
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={this.props.handleClose} color="primary">
+        <Button onClick={props.handleClose} color="primary">
           キャンセル
         </Button>
-        <Button onClick={this.submitForm} color="primary" autoFocus>
+        <Button onClick={submitForm} color="primary" autoFocus>
           送信する
         </Button>
       </DialogActions>
     </Dialog>
-    );
-  }
-}
+  );
+}  
+
+export default FormDaialog
